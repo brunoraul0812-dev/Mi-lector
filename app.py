@@ -9,7 +9,7 @@ from deep_translator import GoogleTranslator
 # Configuración de interfaz premium responsiva
 st.set_page_config(page_title="Nexus Mobile Pure", page_icon="📖", layout="wide")
 
-# --- CONTROL DE SESIÓN NATIVO (ESTADOS DE PYTHON) ---
+# --- CONTROL DE SESIÓN NATIVO (REMANENCIA DE MEMORIA) ---
 if "datos_lectura" not in st.session_state:
     st.session_state.datos_lectura = None
 if "historial_urls" not in st.session_state:
@@ -25,7 +25,7 @@ def desinfectar_texto(texto):
 @st.cache_data(show_spinner=False)
 def extraer_web_optimizada(url):
     try:
-        headers = {"User-Agent": "Mozilla/5.0"}
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
         res = requests.get(url, headers=headers, timeout=10)
         soup = BeautifulSoup(res.text, 'html.parser')
         titulo = soup.find('h1').text.strip() if soup.find('h1') else "Capítulo Online"
@@ -92,73 +92,73 @@ with pestana_web:
     url_input = st.text_input("Inserta el enlace de la novela para leer de inmediato:", placeholder="https://")
     if st.button("🚀 Cargar Novela Online") and url_input:
         with st.spinner("Purificando texto en tiempo real..."):
-            st.session_state.datos_lectura = extraer_web_optimizada(url_input)
-            if url_input not in st.session_state.historial_urls:
-                st.session_state.historial_urls.append(url_input)
+            resultado = extraer_web_optimizada(url_input)
+            if "error" in resultado and resultado["error"]:
+                st.error(resultado["error"])
+            else:
+                st.session_state.datos_lectura = resultado
+                if url_input not in st.session_state.historial_urls:
+                    st.session_state.historial_urls.append(url_input)
 
 with pestana_archivos:
     archivo_subido = st.file_uploader("Sube tu archivo PDF:", type=["pdf"])
-    if archivo_subido and st.button("🛡️ Procesar PDF con Seguridad"):
-        with st.spinner("Desinfectando estructura del documento..."):
-            st.session_state.datos_lectura = procesar_pdf_local(archivo_subido.read(), archivo_subido.name)
+    if archivo_subido:
+        if st.button("🛡️ Procesar PDF con Seguridad"):
+            with st.spinner("Desinfectando estructura del documento..."):
+                st.session_state.datos_lectura = procesar_pdf_local(archivo_subido.read(), archivo_subido.name)
 
 # --- PANEL DE DESPLIEGUE FINAL (LECTURA FLUIDA) ---
 if st.session_state.datos_lectura:
     datos = st.session_state.datos_lectura
     
-    if datos.get("error"):
-        st.error(f"Ocurrió un inconveniente: {datos['error']}")
-    else:
-        st.divider()
-        
-        # MOTOR NATIVO DE TRADUCCIÓN
-        st.subheader("🌐 Idioma de la Obra")
-        col_t1, col_t2 = st.columns(2)
-        with col_t1:
-            idioma_destino = st.selectbox("Traducir contenido al:", ["Idioma Original", "Español", "English", "Português"])
-        with col_t2:
-            st.write("") 
-            if st.button("🔄 Traducir") and idioma_destino != "Idioma Original":
-                with st.spinner("Traduciendo bloques..."):
-                    iso_map = {"Español": "es", "English": "en", "Português": "pt"}
-                    datos["parrafos"] = traducir_parrafos_seguro(datos["parrafos"], iso_map[idioma_destino])
-                    st.success("¡Listo!")
+    st.divider()
+    
+    # MOTOR NATIVO DE TRADUCCIÓN
+    st.subheader("🌐 Idioma de la Obra")
+    col_t1, col_t2 = st.columns(2)
+    with col_t1:
+        idioma_destino = st.selectbox("Traducir contenido al:", ["Idioma Original", "Español", "English", "Português"])
+    with col_t2:
+        st.write("") 
+        if st.button("🔄 Traducir") and idioma_destino != "Idioma Original":
+            with st.spinner("Traduciendo bloques..."):
+                iso_map = {"Español": "es", "English": "en", "Português": "pt"}
+                datos["parrafos"] = traducir_parrafos_seguro(datos["parrafos"], iso_map[idioma_destino])
+                st.success("¡Listo!")
 
-        st.divider()
-        
-        # Módulo de estadísticas internas
-        total_palabras, tiempo_estimado = calcular_metricas(datos["parrafos"])
-        col_m1, col_m2, col_m3 = st.columns(3)
-        col_m1.metric("📖 Palabras totales", f"{total_palabras:,}")
-        col_m2.metric("⏱️ Tiempo de lectura", f"{tiempo_estimado} min")
-        
-        # Exportador Nativo de Streamlit
-        with col_m3:
-            st.download_button(
-                label="📥 Descargar Texto Limpio", 
-                data="\n\n".join(datos["parrafos"]), 
-                file_name=f"{datos['titulo']}_purificado.txt"
-            )
+    st.divider()
+    
+    # Módulo de estadísticas internas
+    total_palabras, tiempo_estimado = calcular_metricas(datos["parrafos"])
+    col_m1, col_m2, col_m3 = st.columns(3)
+    col_m1.metric("📖 Palabras totales", f"{total_palabras:,}")
+    col_m2.metric("⏱️ Tiempo de lectura", f"{tiempo_estimado} min")
+    
+    with col_m3:
+        st.download_button(
+            label="📥 Descargar Texto Limpio", 
+            data="\n\n".join(datos["parrafos"]), 
+            file_name=f"{datos['titulo']}_purificado.txt"
+        )
 
-        st.write("---")
-        st.subheader(datos["titulo"])
-        
-        # Control inteligente de colores
-        colores_map = {
-            "☀️ Día Claro": ("#FFFFFF", "#111111"),
-            "🍂 Sepia Confort": ("#F5ECD5", "#433422"),
-            "🌙 Noche Profunda": ("#121212", "#E0E0E0")
-        }
-        bg_c, text_c = colores_map[modo_color]
+    st.write("---")
+    st.subheader(datos["titulo"])
+    
+    colores_map = {
+        "☀️ Día Claro": ("#FFFFFF", "#111111"),
+        "🍂 Sepia Confort": ("#F5ECD5", "#433422"),
+        "🌙 Noche Profunda": ("#121212", "#E0E0E0")
+    }
+    bg_c, text_c = colores_map[modo_color]
 
-        html_contenedor_puro = f"""
-        <div style='background-color: {bg_c}; color: {text_c}; padding: 30px; border-radius: 10px; 
-                    font-size: {tamano_fuente}px; line-height: 1.8; font-family: sans-serif;'>
-        """
+    html_contenedor_puro = f"""
+    <div style='background-color: {bg_c}; color: {text_c}; padding: 30px; border-radius: 10px; 
+                font-size: {tamano_fuente}px; line-height: 1.8; font-family: sans-serif;'>
+    """
+    for parrafo in datos["parrafos"]:
+        parrafo_seguro = parrafo.replace("<", "&lt;").replace(">", "&gt;")
+        html_contenedor_puro += f"<p style='margin-bottom: 1.4em;'>{parrafo_seguro}</p>"
         
-        for parrafo in datos["parrafos"]:
-            parrafo_seguro = parrafo.replace("<", "&lt;").replace(">", "&gt;")
-            html_contenedor_puro += f"<p style='margin-bottom: 1.4em;'>{parrafo_seguro}</p>"
-            
-        html_contenedor_puro += "</div>"
-        st.markdown(html_contenedor_puro, unsafe_allow_html=True)
+    html_contenedor_puro += "</div>"
+    st.markdown(html_contenedor_puro, unsafe_allow_html=True)
+
