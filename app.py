@@ -113,7 +113,7 @@ if st.session_state.datos_lectura:
         
         # MOTOR NATIVO DE TRADUCCIÓN
         st.subheader("🌐 Idioma de la Obra")
-        col_t1, col_t2 = st.columns()
+        col_t1, col_t2 = st.columns(2)
         with col_t1:
             idioma_destino = st.selectbox("Traducir contenido al:", ["Idioma Original", "Español", "English", "Português"])
         with col_t2:
